@@ -3,35 +3,46 @@ import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-API_URL = os.getenv("API_URL")
-AUTH_TOKEN = os.getenv("AUTH_TOKEN")
+# Railway se environment variable milega
+BOT_TOKEN = os.getenv("8097482357:AAHiX0sfa35AyVISPHlC9Xxa1CZlxAhYKjI")
+API_URL = os.getenv("https://young-shadow-ee4c.dodosalers.workers.dev/api/register")
 
+# ===== REGISTER COMMAND =====
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    # Sirf group me kaam kare
+    if update.effective_chat.type not in ["group", "supergroup"]:
+        await update.message.reply_text("❌ Use this command inside group.")
+        return
+
+    # Agar serial nahi diya
     if len(context.args) == 0:
         await update.message.reply_text("Usage:\n/register SERIAL")
         return
 
-    serial = context.args[0]
+    serial = context.args[0].strip()
 
     try:
-        r = requests.post(
-            API_URL,
+        response = requests.post(
+            API_URL + "/api/register",
             json={"serial": serial},
-            headers={"Authorization": AUTH_TOKEN}
+            timeout=10
         )
 
-        if r.status_code == 200 and r.json().get("success"):
-            await update.message.reply_text(f"✅ {serial} Registered")
+        data = response.json()
+
+        if data.get("success"):
+            await update.message.reply_text(f"✅ Serial {serial} Registered Successfully")
         else:
-            await update.message.reply_text("⚠️ Failed or Already Exists")
+            await update.message.reply_text("⚠️ Error Registering Serial")
 
-    except:
-        await update.message.reply_text("❌ Server Error")
+    except Exception as e:
+        await update.message.reply_text("❌ Server Connection Failed")
 
+
+# ===== BOT START =====
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("register", register))
 
-print("Bot Running...")
+print("SSTEAM A5 Bot Running 🚀")
 app.run_polling()
