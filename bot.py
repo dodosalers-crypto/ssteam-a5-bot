@@ -4,8 +4,8 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # Railway se environment variable milega
-BOT_TOKEN = os.getenv("8097482357:AAHiX0sfa35AyVISPHlC9Xxa1CZlxAhYKjI")
-API_URL = os.getenv("https://young-shadow-ee4c.dodosalers.workers.dev/api/register")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+API_URL = os.getenv("API_URL")
 
 # ===== REGISTER COMMAND =====
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
