@@ -5,17 +5,9 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_URL = os.getenv("API_URL")
-ADMIN_ID = int(os.getenv("ADMIN_ID"))
 
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-
-    # ✅ Admin check
-    if user_id != ADMIN_ID:
-        await update.message.reply_text("⛔ Only Admin Can Register Serials")
-        return
-
-    # ✅ Format check
+    # Sirf 1 argument allow
     if len(context.args) != 1:
         await update.message.reply_text(
             "❌ Wrong format\n\n"
@@ -33,18 +25,9 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{API_URL}/api/register",
             json={
                 "serial": serial,
-                "telegram_id": user_id
+                "telegram_id": update.effective_user.id
             }
         )
-
-        data = response.json()
-
-        # ✅ Already registered check
-        if response.status_code == 400:
-            await update.message.reply_text(
-                f"⚠️ Serial Already Registered\n\n{serial}"
-            )
-            return
 
         if response.status_code == 200:
             await update.message.reply_text(
