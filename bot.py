@@ -3,46 +3,59 @@ import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Railway se environment variable milega
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_URL = os.getenv("API_URL")
+ADMIN_ID = int(os.getenv("ADMIN_ID"))
 
-# ===== REGISTER COMMAND =====
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
 
-    # Sirf group me kaam kare
-    if update.effective_chat.type not in ["group", "supergroup"]:
-        await update.message.reply_text("❌ Use this command inside group.")
+    # ✅ Admin check
+    if user_id != ADMIN_ID:
+        await update.message.reply_text("⛔ Only Admin Can Register Serials")
         return
 
-    # Agar serial nahi diya
-    if len(context.args) == 0:
-        await update.message.reply_text("Usage:\n/register SERIAL")
+    # ✅ Format check
+    if len(context.args) != 1:
+        await update.message.reply_text(
+            "❌ Wrong format\n\n"
+            "✅ Use:\n"
+            "/register SERIALNUMBER\n\n"
+            "Example:\n"
+            "/register C39X69ZAKPHF"
+        )
         return
 
     serial = context.args[0].strip()
 
     try:
         response = requests.post(
-            API_URL + "/api/register",
-            json={"serial": serial},
-            timeout=10
+            f"{API_URL}/api/register",
+            json={
+                "serial": serial,
+                "telegram_id": user_id
+            }
         )
 
         data = response.json()
 
-        if data.get("success"):
-            await update.message.reply_text(f"✅ Serial {serial} Registered Successfully")
+        # ✅ Already registered check
+        if response.status_code == 400:
+            await update.message.reply_text(
+                f"⚠️ Serial Already Registered\n\n{serial}"
+            )
+            return
+
+        if response.status_code == 200:
+            await update.message.reply_text(
+                f"✅ Serial Registered Successfully\n\n{serial}"
+            )
         else:
-            await update.message.reply_text("⚠️ Error Registering Serial")
+            await update.message.reply_text("❌ Registration Failed")
 
-    except Exception as e:
-        await update.message.reply_text("❌ Server Connection Failed")
+    except Exception:
+        await update.message.reply_text("⚠️ Server Error")
 
-
-# ===== BOT START =====
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("register", register))
-
-print("SSTEAM A5 Bot Running 🚀")
 app.run_polling()
