@@ -53,3 +53,5 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("register", register))
 app.run_polling()
+
+app.run_polling(drop_pending_updates=True)
