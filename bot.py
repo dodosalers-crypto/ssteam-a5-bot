@@ -7,7 +7,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_URL = os.getenv("API_URL")
 
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Sirf 1 argument allow
+
+    # Format check
     if len(context.args) != 1:
         await update.message.reply_text(
             "❌ Wrong format\n\n"
@@ -29,6 +30,16 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
             }
         )
 
+        data = response.json()
+
+        # Already registered case
+        if response.status_code == 400:
+            await update.message.reply_text(
+                f"⚠️ Serial Already Registered\n\n{serial}"
+            )
+            return
+
+        # Success case
         if response.status_code == 200:
             await update.message.reply_text(
                 f"✅ Serial Registered Successfully\n\n{serial}"
