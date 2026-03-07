@@ -6,7 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_URL = os.getenv("API_URL")
 
-OWNER_ID = 123456789  # apni telegram id yaha likho
+OWNER_ID = 6374332180  # apni telegram id yaha likho
 
 approved_users = set()
 pending_users = {}
@@ -20,48 +20,43 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if user_id in approved_users:
         await update.message.reply_text(
-"""
-🚀 *WELCOME*
+"""🚀 WELCOME
 
-Your account is *approved*.
+Your account is approved.
 
-Just send your *Serial Number* directly to register.
-""",
-parse_mode="Markdown"
+Send your Serial Number directly to register."""
         )
         return
 
     pending_users[user_id] = username
 
     await update.message.reply_text(
-"""
-━━━━━━━━━━━━━━━━━━
-🔒 *ACCESS PENDING*
+"""━━━━━━━━━━━━━━━━━━
+🔒 ACCESS PENDING
 ━━━━━━━━━━━━━━━━━━
 
-Your account is waiting for *Admin Approval*.
+Your account is waiting for admin approval.
 
-📩 Contact Owner
+Contact Owner:
 @ilcapo_7
-
-Once approved you can register unlimited serials.
-""",
-parse_mode="Markdown"
+"""
     )
 
-    await context.bot.send_message(
-        chat_id=OWNER_ID,
-        text=f"""
-🚨 *NEW USER REQUEST*
+    try:
+        await context.bot.send_message(
+            chat_id=OWNER_ID,
+            text=f"""
+NEW USER REQUEST
 
-👤 Username: @{username}
-🆔 User ID: `{user_id}`
+Username: @{username}
+User ID: {user_id}
 
 Approve with:
 /approve_user {user_id}
-""",
-parse_mode="Markdown"
-    )
+"""
+        )
+    except:
+        pass
 
 
 # SERIAL MESSAGE HANDLER
@@ -73,15 +68,12 @@ async def serial_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id not in approved_users:
 
         await update.message.reply_text(
-"""
-⛔ *ACCESS DENIED*
+"""⛔ ACCESS DENIED
 
 Your account is not approved yet.
 
 Contact owner:
-@ilcapo_7
-""",
-parse_mode="Markdown"
+@ilcapo_7"""
         )
         return
 
@@ -92,50 +84,40 @@ parse_mode="Markdown"
             json={
                 "serial": serial,
                 "telegram_id": user_id
-            }
+            },
+            timeout=20
         )
 
         if response.status_code == 200:
 
             await update.message.reply_text(
-f"""
-✅ *SERIAL REGISTERED*
+f"""✅ SERIAL REGISTERED
 
-━━━━━━━━━━━━━━━━━━
-🔑 Serial:
-`{serial}`
-━━━━━━━━━━━━━━━━━━
+Serial:
+{serial}
 
-Activation Successful.
-""",
-parse_mode="Markdown"
+Activation Successful."""
             )
 
         elif response.status_code == 400:
 
             await update.message.reply_text(
-f"""
-⚠️ *DUPLICATE SERIAL*
+f"""⚠️ DUPLICATE SERIAL
 
 Serial already registered:
-
-`{serial}`
-""",
-parse_mode="Markdown"
+{serial}"""
             )
 
         else:
 
             await update.message.reply_text(
-"❌ Registration failed.",
-parse_mode="Markdown"
+"❌ Registration failed."
             )
 
-    except:
+    except requests.exceptions.RequestException:
 
         await update.message.reply_text(
-"⚠️ Server error occurred.",
-parse_mode="Markdown"
+"⚠️ Server connection error. Try again."
         )
 
 
@@ -156,24 +138,29 @@ async def approve_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id in pending_users:
         del pending_users[user_id]
 
-    await context.bot.send_message(
-        chat_id=user_id,
-        text="""
-🎉 *ACCESS APPROVED*
+    try:
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="""🎉 ACCESS APPROVED
 
-You can now send *Serial Numbers* directly to register.
-""",
-        parse_mode="Markdown"
-    )
+You can now send Serial Numbers directly to register."""
+        )
+    except:
+        pass
 
     await update.message.reply_text("✅ User Approved")
 
 
+# MAIN BOT
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("approve_user", approve_user))
-
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, serial_handler))
 
-app.run_polling(drop_pending_updates=True)
+# STABLE POLLING (Network error fix)
+app.run_polling(
+    drop_pending_updates=True,
+    allowed_updates=Update.ALL_TYPES,
+    timeout=60
+)
