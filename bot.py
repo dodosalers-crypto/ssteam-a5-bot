@@ -6,7 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_URL = os.getenv("API_URL")
 
-OWNER_ID = 123456789  # apni telegram id yaha likho
+OWNER_ID = 6374332180  # apni telegram id yaha likho
 
 approved_users = set()
 pending_users = {}
