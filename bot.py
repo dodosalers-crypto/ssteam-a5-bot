@@ -6,7 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_URL = os.getenv("API_URL")
 
-OWNER_ID = 6374332180  # apni telegram id yaha likho
+OWNER_ID = 123456789  # apni telegram id yaha likho
 
 approved_users = set()
 pending_users = {}
@@ -51,7 +51,7 @@ NEW USER REQUEST
 Username: @{username}
 User ID: {user_id}
 
-Approve with:
+Approve:
 /approve_user {user_id}
 """
         )
@@ -151,14 +151,48 @@ You can now send Serial Numbers directly to register."""
     await update.message.reply_text("✅ User Approved")
 
 
+# REMOVE USER
+async def remove_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_user.id != OWNER_ID:
+        return
+
+    if len(context.args) != 1:
+        await update.message.reply_text("Use: /remove_user USERID")
+        return
+
+    user_id = int(context.args[0])
+
+    if user_id in approved_users:
+        approved_users.remove(user_id)
+
+        try:
+            await context.bot.send_message(
+                chat_id=user_id,
+                text="""⛔ ACCESS REMOVED
+
+Your access has been removed by admin.
+
+You must request approval again."""
+            )
+        except:
+            pass
+
+        await update.message.reply_text("✅ User Removed")
+
+    else:
+        await update.message.reply_text("User not in approved list")
+
+
 # MAIN BOT
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("approve_user", approve_user))
+app.add_handler(CommandHandler("remove_user", remove_user))
+
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, serial_handler))
 
-# STABLE POLLING (Network error fix)
 app.run_polling(
     drop_pending_updates=True,
     allowed_updates=Update.ALL_TYPES,
